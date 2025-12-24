@@ -1,0 +1,11 @@
+connection link with username and password for mongoDB:
+mongodb+srv://ss_db_user:70vko6k9fPmcpYgw@aap-admin.xrmssob.mongodb.net/
+
+mongodb+srv://ss_db_user:<db_password>@aap-admin.xrmssob.mongodb.net/?appName=aap-admin
+
+node init-database.js : to complete the database
+
+
+npm install mongodb dotenv express-session
+node init-database.js
+node app.js
