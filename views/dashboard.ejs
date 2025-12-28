@@ -26,6 +26,10 @@
   </header>
 
   <main class="flex-grow flex flex-col items-center text-center px-6 py-10">
+    <% if (process.env.ADMIN_EMAILS.split(',').includes(user.email)) { %>
+      <a href="/admin/registrations" class="btn btn-warning">Admin Panel</a>
+    <% } %>
+
     <h1 class="text-2xl font-bold mb-8">Welcome, <%= user.displayName %>!</h1>
 
     <% if (courses.length === 0) { %>

@@ -1,12 +1,12 @@
 require('dotenv').config();
 const express = require('express');
+const app = express();
 const session = require('express-session');
 const passport = require('./passport');
 const path = require('path');
-
+const supabaseAdmin = require('./supabaseAdmin');
 const dashboardRoutes = require('./routes/dashboard');
-
-const app = express();
+const adminRouter = require('./routes/admin');
 
 app.use(express.static(path.join(process.cwd(), 'public')));
 
@@ -31,7 +31,23 @@ app.get('/auth/google',
 
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/unauthorized' }),
-  (req, res) => {
+  async (req, res) => {
+    const { id, displayName, emails } = req.user;
+    const email = emails?.[0]?.value || null;
+
+    const { error } = await supabaseAdmin
+      .from('users')
+      .upsert({
+        google_id: id,
+        email,
+        display_name: displayName,
+      });
+
+    if (error) {
+      console.error('Supabase user upsert failed:', error);
+      return res.redirect('/unauthorized');
+    }
+
     res.redirect('/dashboard');
   }
 );
@@ -42,6 +58,10 @@ function ensureAuthenticated(req, res, next) {
 }
 
 app.use('/dashboard', ensureAuthenticated, dashboardRoutes);
+const isAdmin = require('./middleware/isAdmin');
+
+app.use('/admin', isAdmin, adminRouter);
+
 
 app.get('/unauthorized', (req, res) => {
   res.send("Access restricted to BITS Goa users only.");
