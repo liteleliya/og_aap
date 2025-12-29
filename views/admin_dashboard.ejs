@@ -28,6 +28,14 @@
     </select>
   </div>
 
+  <div id="registrationCount" class="mb-6">
+    <div class="inline-flex items-center gap-3 bg-blue-50 border border-blue-200 text-blue-800 px-4 py-2 rounded-lg shadow-sm">
+      <span class="font-semibold" id="registrationCountText">
+        Total Registrations: <%= registrations.length %>
+      </span>
+    </div>
+  </div>
+
   <h2 class="text-xl font-semibold mb-4">Registrations (Grouped by User)</h2>
   <div class="overflow-x-auto">
     <table id="registrationsTable" class="min-w-full border border-gray-200 rounded shadow-sm bg-white">
@@ -61,6 +69,7 @@
     const downloadBtn = document.getElementById('downloadBtn');
     const tableRows = document.querySelectorAll('#registrationsTable tbody tr');
     const noResults = document.getElementById('noResults');
+    const registrationCount = document.getElementById('registrationCount');
 
     courseSelect.addEventListener('change', () => {
       const selectedCourseId = courseSelect.value;
@@ -80,6 +89,12 @@
         row.style.display = match ? '' : 'none';
         if (match) visibleCount++;
       });
+
+      if (selectedCourseId) {
+        registrationCount.textContent = `Total Registrations for this course: ${visibleCount}`;
+      } else {
+        registrationCount.textContent = `Total Registrations (all courses): ${visibleCount}`;
+      }
 
       noResults.classList.toggle('hidden', visibleCount !== 0);
     });
