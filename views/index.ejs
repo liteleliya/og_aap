@@ -11,22 +11,43 @@
 
 <body class="bg-gray-900 text-white font-sans">
 
-    <header class="sticky top-0 bg-gray-900/80 backdrop-blur border-b border-gray-700">
+    <header class="sticky top-0 bg-gray-900/80 backdrop-blur border-b border-gray-700 z-50">
         <div class="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
+
             <div class="flex items-center gap-2 font-bold text-lg">
-                <img src="https://bpgc-cte.org/logo.png" alt="CTE Logo" class="w-8 h-8">
-                <span>CTE | BITS Goa</span>
+            <img src="https://bpgc-cte.org/logo.png" alt="CTE Logo" class="w-8 h-8">
+            <span>CTE | BITS Goa</span>
             </div>
 
-            <div>
-                <a href="/auth/google" class="px-4 py-2 rounded-md bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 
-          hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 
-          text-white font-semibold shadow-md transition-all duration-300">
-                    Login
-                </a>
-            </div>
+            <nav class="hidden md:flex items-center gap-6 font-semibold">
+            <a href="/catalog" class="hover:text-green-400 transition">Courses</a>
+            <a href="/auth/google?techweekend=true" class="hover:text-green-400 transition">TechWeekend</a>
+            <a href="/auth/google" class="px-4 py-2 rounded-md bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 
+                hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 
+                text-white shadow-md transition-all duration-300">
+                Login
+            </a>
+            </nav>
+
+            <button id="menu-btn" class="md:hidden flex flex-col gap-1 focus:outline-none">
+            <span class="w-6 h-0.5 bg-white"></span>
+            <span class="w-6 h-0.5 bg-white"></span>
+            <span class="w-6 h-0.5 bg-white"></span>
+            </button>
         </div>
-    </header>
+
+        <div id="mobile-menu" class="hidden md:hidden bg-gray-900 border-t border-gray-700">
+            <nav class="flex flex-col items-center gap-4 py-4 font-semibold">
+            <a href="/courses" class="hover:text-green-400 transition">Courses</a>
+            <a href="/auth/google?techweekend=true" class="hover:text-green-400 transition">TechWeekend</a>
+            <a href="/auth/google" class="px-4 py-2 rounded-md bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 
+                hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 
+                text-white shadow-md transition-all duration-300">
+                Login
+            </a>
+            </nav>
+        </div>
+        </header>
 
     <section class="text-center py-24 px-6">
         <h1 class="text-4xl md:text-6xl font-bold mb-6">
@@ -127,6 +148,14 @@
             <span>© CTE BPGC 2025</span>
         </div>
     </footer>
+
+    <script>
+    const menuBtn = document.getElementById('menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    menuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+    </script>
 
 </body>
 

@@ -1,0 +1,87 @@
+const express = require('express');
+const router = express.Router();
+const supabase = require('../supabaseClient');
+
+// TechWeekend dashboard
+router.get('/', async (req, res) => {
+  const userId = req.user.id;
+
+  // Fetch TechWeekend events
+  const { data: events, error: eventError } = await supabase
+    .from('tw_events')
+    .select('*');
+
+  // Fetch registrations for this user
+  const { data: registrations, error: regError } = await supabase
+    .from('tw_registrations')
+    .select('event_id')
+    .eq('user_id', userId);
+
+  if (eventError || regError) {
+    console.error('Error loading TechWeekend dashboard:', eventError || regError);
+    return res.status(500).send('Error loading TechWeekend dashboard');
+  }
+
+  // Collect registered event IDs
+  const registeredIds = new Set(registrations.map(r => r.event_id));
+
+  // Admin check
+  const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim());
+  const userEmail = req.user?.email || req.user?.emails?.[0]?.value;
+  const isAdmin = adminEmails?.includes(userEmail);
+
+  // Render TechWeekend dashboard
+  res.render('tech-weekend', {
+    events: events || [],
+    registeredIds,
+    user: req.user,
+    isAdmin
+  });
+});
+
+// Registration route
+router.post('/register/:eventId', async (req, res) => {
+  const userId = req.user.id; 
+  const eventId = req.params.eventId;
+
+  const { error } = await supabase
+    .from('tw_registrations')
+    .insert([{ user_id: userId, event_id: eventId }]);
+
+  if (error) {
+    console.error('Registration error:', error);
+    return res.status(500).send(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>Registration Failed</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center">
+        <div class="bg-red-900/70 border border-red-700 rounded-xl p-6 max-w-md w-full text-center shadow-lg">
+          <div class="flex items-center justify-center mb-4">
+            <svg class="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v2m0 4h.01M12 5a7 7 0 100 14a7 7 0 000-14z" />
+            </svg>
+          </div>
+          <h2 class="text-xl font-bold mb-2">Registration Failed</h2>
+          <p class="text-gray-300 mb-4">
+            You may have already registered for this event. Please return to the TechWeekend dashboard to verify.
+          </p>
+          <a href="/tech-weekend" 
+            class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white font-medium transition">
+            Back to TechWeekend Dashboard
+          </a>
+        </div>
+      </body>
+      </html>
+    `);
+  }
+
+  res.redirect('/tech-weekend');
+});
+
+module.exports = router;

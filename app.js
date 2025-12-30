@@ -7,6 +7,7 @@ const path = require('path');
 const supabaseAdmin = require('./supabaseAdmin');
 const dashboardRoutes = require('./routes/dashboard');
 const adminRouter = require('./routes/admin');
+const techWeekendRouter = require('./routes/techWeekend');
 
 app.use(express.static(path.join(process.cwd(), 'public')));
 
@@ -17,6 +18,10 @@ app.get('/', (req, res) => {
   res.render('index');
 });
 
+app.get('/catalog',(req,res)=>{
+  res.render('catalog'); 
+})
+
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
@@ -25,32 +30,59 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
-);
+// Start Google OAuth
+app.get('/auth/google', (req, res, next) => {
+  const state = req.query.techweekend === 'true' ? 'techweekend' : 'courses';
+  passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    state
+  })(req, res, next);
+});
 
+// Callback
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/unauthorized' }),
   async (req, res) => {
     const { id, displayName, emails } = req.user;
     const email = emails?.[0]?.value || null;
 
-    const { error } = await supabaseAdmin
-      .from('users')
-      .upsert({
-        google_id: id,
-        email,
-        display_name: displayName,
-      });
+    const state = req.query.state;
 
-    if (error) {
-      console.error('Supabase user upsert failed:', error);
+    try {
+      if (state === 'techweekend') {
+        const { error } = await supabaseAdmin
+          .from('tw_users')
+          .upsert({
+            google_id: id,
+            email,
+            display_name: displayName,
+          });
+        if (error) {
+          console.error('Supabase TechWeekend upsert failed:', error);
+          return res.redirect('/unauthorized');
+        }
+        return res.redirect('/tech-weekend');
+      } else {
+        const { error } = await supabaseAdmin
+          .from('users')
+          .upsert({
+            google_id: id,
+            email,
+            display_name: displayName,
+          });
+        if (error) {
+          console.error('Supabase user upsert failed:', error);
+          return res.redirect('/unauthorized');
+        }
+        return res.redirect('/dashboard');
+      }
+    } catch (err) {
+      console.error('Unexpected error during upsert:', err);
       return res.redirect('/unauthorized');
     }
-
-    res.redirect('/dashboard');
   }
 );
+
 
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) return next();
@@ -58,10 +90,11 @@ function ensureAuthenticated(req, res, next) {
 }
 
 app.use('/dashboard', ensureAuthenticated, dashboardRoutes);
+app.use('/tech-weekend', ensureAuthenticated, techWeekendRouter); // ✅ added
+
 const isAdmin = require('./middleware/isAdmin');
-
 app.use('/admin', isAdmin, adminRouter);
-
+app.use('/admin/techweekend', require('./routes/techWeekendAdmin'));
 
 app.get('/unauthorized', (req, res) => {
   res.send("Access restricted to BITS Goa users only.");
