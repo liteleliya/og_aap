@@ -14,13 +14,15 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 app.set('views', path.join(process.cwd(), 'views'));
 app.set('view engine', 'ejs');
 
+app.use(express.urlencoded({ extended: true }));
+
 app.get('/', (req, res) => {
   res.render('index');
 });
 
-app.get('/catalog',(req,res)=>{
+app.get('/catalog', (req, res) => {
   res.render('catalog'); 
-})
+});
 
 app.use(session({
   secret: process.env.SESSION_SECRET,
@@ -30,7 +32,6 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Start Google OAuth
 app.get('/auth/google', (req, res, next) => {
   const state = req.query.techweekend === 'true' ? 'techweekend' : 'courses';
   passport.authenticate('google', {
@@ -39,7 +40,6 @@ app.get('/auth/google', (req, res, next) => {
   })(req, res, next);
 });
 
-// Callback
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/unauthorized' }),
   async (req, res) => {
@@ -83,18 +83,19 @@ app.get('/auth/google/callback',
   }
 );
 
-
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) return next();
   res.redirect('/');
 }
 
 app.use('/dashboard', ensureAuthenticated, dashboardRoutes);
-app.use('/tech-weekend', ensureAuthenticated, techWeekendRouter); // ✅ added
+app.use('/tech-weekend', ensureAuthenticated, techWeekendRouter);
 
 const isAdmin = require('./middleware/isAdmin');
+
+app.use('/admin', require('./routes/adminPassword'));
 app.use('/admin', isAdmin, adminRouter);
-app.use('/admin/techweekend', require('./routes/techWeekendAdmin'));
+app.use('/admin/techweekend', isAdmin, require('./routes/techWeekendAdmin'));
 
 app.get('/unauthorized', (req, res) => {
   res.send("Access restricted to BITS Goa users only.");
@@ -102,6 +103,7 @@ app.get('/unauthorized', (req, res) => {
 
 app.get('/logout', (req, res) => {
   req.logout(() => {
+    req.session.adminVerified = false;
     res.redirect('/');
   });
 });
