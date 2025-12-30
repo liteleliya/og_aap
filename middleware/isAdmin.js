@@ -11,7 +11,6 @@ function isAdmin(req, res, next) {
   }
 
   if (!req.session.adminVerified) {
-    // Save intended admin path
     req.session.intendedAdminPath = req.originalUrl;
     return res.redirect('/admin/verify-password');
   }

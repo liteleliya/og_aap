@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const supabaseAdmin = require('../supabaseAdmin');   // privileged Supabase client
-const { Parser } = require('json2csv');             // for CSV export
+const supabaseAdmin = require('../supabaseAdmin');  
+const { Parser } = require('json2csv');          
 
-// Unified Admin Dashboard (grouped by user)
 router.get('/dashboard', async (req, res) => {
   const { data, error } = await supabaseAdmin
     .from('course_registrations')
@@ -18,7 +17,6 @@ router.get('/dashboard', async (req, res) => {
     return res.status(500).send('Error loading admin dashboard');
   }
 
-  // Group by user
   const grouped = {};
   data.forEach(r => {
     const email = r.users?.email;
@@ -56,7 +54,6 @@ router.get('/dashboard', async (req, res) => {
   res.render('admin_dashboard', { registrations: groupedData, courses });
 });
 
-// Download all registrations (grouped by user) as CSV
 router.get('/registrations/download', async (req, res) => {
   const { data, error } = await supabaseAdmin
     .from('course_registrations')
@@ -103,7 +100,6 @@ router.get('/registrations/download', async (req, res) => {
   res.send(csv);
 });
 
-// Download registrations for a specific course — only email + display name
 router.get('/registrations/:courseId/download', async (req, res) => {
   const { courseId } = req.params;
 
@@ -124,7 +120,6 @@ router.get('/registrations/:courseId/download', async (req, res) => {
     return res.status(404).send('No registrations found for this course');
   }
 
-  // Flatten directly — no grouping needed
   const flatData = data.map(r => ({
     email: r.users?.email,
     display_name: r.users?.display_name
