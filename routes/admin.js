@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const supabaseAdmin = require('../supabaseAdmin');
 const { Parser } = require('json2csv');
-const isAdmin = require('../middleware/isAdmin'); 
+const isAdmin = require('../middleware/isAdmin');
+
 router.get('/dashboard', isAdmin, async (req, res) => {
   try {
     const { data: registrationsData, error: regError } = await supabaseAdmin
@@ -74,17 +75,29 @@ router.get('/dashboard', isAdmin, async (req, res) => {
     const totalPages = Math.ceil((count || 0) / limit);
     const prevPage = page > 1 ? page - 1 : null;
     const nextPage = page < totalPages ? page + 1 : null;
+
+    const activeTab = req.query.tab || null;
+
     res.render('admin_dashboard', {
       registrations: groupedData,
       courses,
+      users: annotatedUsers,
+      totalPages,
+      currentPage: page,
+      prevPage,
+      nextPage,
+      limit,
       user: req.user,
-      isAdmin: true
+      isAdmin: true,
+      activeTab
     });
+
   } catch (err) {
     console.error('Unexpected error:', err);
     res.status(500).send('Internal Server Error');
   }
 });
+
 
 router.get('/registrations/download', async (req, res) => {
   const { data, error } = await supabaseAdmin
@@ -212,5 +225,24 @@ router.post('/courses/:id/edit', async (req, res) => {
 
   res.redirect('/admin/dashboard');
 });
+
+router.post('/promote', isAdmin, async (req, res) => {
+  const email = req.body.email;
+  const { error } = await supabaseAdmin.from('admins').insert([{ email }]);
+  if (error) {
+    console.error('Error promoting user:', error);
+  }
+  res.redirect('/admin/dashboard?tab=users');
+});
+
+router.post('/demote', isAdmin, async (req, res) => {
+  const email = req.body.email;
+  const { error } = await supabaseAdmin.from('admins').delete().eq('email', email);
+  if (error) {
+    console.error('Error demoting user:', error);
+  }
+  res.redirect('/admin/dashboard?tab=users');
+});
+
 
 module.exports = router;

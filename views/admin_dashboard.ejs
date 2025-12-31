@@ -19,6 +19,12 @@
       class="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-600 flex items-center gap-2">
       <span id="coursesArrow">+</span> Courses
     </button>
+    <button onclick="toggleSection('usersSection', 'usersArrow')"
+      class="px-4 py-2 bg-red-700 text-white rounded hover:bg-red-600 flex items-center gap-2">
+      <span id="usersArrow">
+        <%= activeTab==='users' ? '−' : '+' %>
+      </span> Users
+    </button>
     <a href="/dashboard" class="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600">
       Back to User Dashboard
     </a>
@@ -169,12 +175,91 @@
     </div>
   </div>
 
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-xl font-semibold text-white">Registered Users</h2>
+
+    <div class="flex items-center gap-4">
+      <form method="get" action="/admin/dashboard"
+        class="flex items-center gap-3 bg-gray-800 px-4 py-2 rounded shadow-sm">
+        <input type="hidden" name="page" value="1">
+        <input type="hidden" name="tab" value="users">
+        <label for="limit" class="text-sm text-gray-300 font-medium">Rows per page:</label>
+        <select name="limit" id="limit" onchange="this.form.submit()"
+          class="px-3 py-1 bg-gray-700 text-white text-sm rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="5" <%=limit==5 ? 'selected' : '' %>>5</option>
+          <option value="20" <%=limit==20 ? 'selected' : '' %>>20</option>
+          <option value="100" <%=limit==100 ? 'selected' : '' %>>100</option>
+        </select>
+      </form>
+
+      <input type="text" id="userSearch" placeholder="Search users..."
+        class="px-3 py-1 bg-gray-800 text-white text-sm rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table id="usersTable" class="min-w-full border border-blue-600 rounded shadow-sm bg-black">
+      <thead class="bg-blue-700">
+        <tr>
+          <th class="px-4 py-2 text-left font-bold text-white border-r border-blue-600">Email</th>
+          <th class="px-4 py-2 text-left font-bold text-white border-r border-blue-600">Display Name</th>
+          <th class="px-4 py-2 text-left font-bold text-white">Role</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach((u, idx)=> { %>
+          <tr class="<%= idx % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800' %> hover:bg-blue-950 border-b border-blue-600">
+            <td class="px-4 py-2 text-blue-300 border-r border-blue-600">
+              <%= u.email %>
+            </td>
+            <td class="px-4 py-2 text-blue-300 border-r border-blue-600">
+              <%= u.display_name %>
+            </td>
+            <td class="px-4 py-2 text-blue-300 flex items-center gap-3">
+              <% if (u.role==='Admin' ) { %>
+                <span class="font-semibold text-green-400">Admin</span>
+                <form method="post" action="/admin/demote"
+                  onsubmit="return confirm('Demote <%= u.display_name %> to User?')">
+                  <input type="hidden" name="email" value="<%= u.email %>">
+                  <button type="submit"
+                    class="px-2 py-1 bg-red-700 text-white rounded hover:bg-red-600 text-sm">Demote</button>
+                </form>
+                <% } else { %>
+                  <span class="font-semibold text-yellow-400">User</span>
+                  <form method="post" action="/admin/promote"
+                    onsubmit="return confirm('Promote <%= u.display_name %> to Admin?')">
+                    <input type="hidden" name="email" value="<%= u.email %>">
+                    <button type="submit"
+                      class="px-2 py-1 bg-green-700 text-white rounded hover:bg-green-600 text-sm">Promote</button>
+                  </form>
+                  <% } %>
+            </td>
+          </tr>
+          <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-4 flex justify-between text-gray-300">
+    <% if (prevPage) { %>
+      <a href="/admin/dashboard?page=<%= prevPage %>&tab=users"
+        class="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600">Prev</a>
+      <% } %>
+        <span>Page <%= currentPage %> of <%= totalPages %></span>
+        <% if (nextPage) { %>
+          <a href="/admin/dashboard?page=<%= nextPage %>&tab=users"
+            class="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600">Next</a>
+          <% } %>
+  </div>
+  </div>
+
   <script>
     function toggleSection(sectionId) {
-      const sections = ['registrationsSection', 'coursesSection'];
+      const sections = ['registrationsSection', 'coursesSection', 'usersSection'];
       const arrows = {
         registrationsSection: document.getElementById('registrationsArrow'),
-        coursesSection: document.getElementById('coursesArrow')
+        coursesSection: document.getElementById('coursesArrow'),
+        usersSection: document.getElementById('usersArrow')
       };
 
       sections.forEach(id => {
@@ -243,7 +328,22 @@
         });
       }
     });
+    document.getElementById('userSearch').addEventListener('input', function () {
+      const query = this.value.toLowerCase();
+      const rows = document.querySelectorAll('#usersTable tbody tr');
+
+      rows.forEach(row => {
+        const email = row.cells[0].textContent.toLowerCase();
+        const displayName = row.cells[1].textContent.toLowerCase();
+        if (email.includes(query) || displayName.includes(query)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
   </script>
+
 </body>
 
 </html>
