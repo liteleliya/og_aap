@@ -93,7 +93,6 @@ app.use('/tech-weekend', ensureAuthenticated, techWeekendRouter);
 
 const isAdmin = require('./middleware/isAdmin');
 
-app.use('/admin', require('./routes/adminPassword'));
 app.use('/admin', isAdmin, adminRouter);
 app.use('/admin/techweekend', isAdmin, require('./routes/techWeekendAdmin'));
 

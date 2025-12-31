@@ -1,113 +1,260 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>Admin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="icon" href="https://bpgc-cte.org/logo.png" type="image/png">
 </head>
-<body class="bg-gray-900 min-h-screen p-8 font-sans text-white">
-  <h1 class="text-3xl font-bold mb-6">Admin Dashboard</h1>
 
-  <div class="flex items-center gap-4 mb-6">
+<body class="bg-gray-900 min-h-screen p-8 font-sans text-white">
+  <h1 class="text-3xl text-center font-bold mb-6">Admin Dashboard</h1>
+
+  <div class="flex justify-center gap-4 mb-6">
+    <button onclick="toggleSection('registrationsSection', 'registrationsArrow')"
+      class="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-600 flex items-center gap-2">
+      <span id="registrationsArrow">+</span> Registrations
+    </button>
+    <button onclick="toggleSection('coursesSection', 'coursesArrow')"
+      class="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-600 flex items-center gap-2">
+      <span id="coursesArrow">+</span> Courses
+    </button>
     <a href="/dashboard" class="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600">
       Back to User Dashboard
     </a>
-
-    <a id="downloadBtn" href="/admin/registrations/download" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">
-      Download All Registrations (CSV)
-    </a>
-
-    <label for="courseSelect" class="font-medium">Filter by Course:</label>
-    <select id="courseSelect" class="border border-gray-600 bg-gray-800 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      <option value="">-- All Courses --</option>
-      <% courses.forEach(c => { %>
-        <option value="<%= c.id %>"><%= c.name %></option>
-      <% }) %>
-    </select>
   </div>
 
-  <div class="flex flex-wrap gap-4 mb-6">
-    <div class="inline-flex items-center gap-3 bg-green-900 border border-green-700 text-green-300 px-4 py-2 rounded-lg shadow-sm">
-      <span class="font-semibold" id="registrationCountText">
-        Total People: <%= registrations.length %>
-      </span>
+  <div id="registrationsSection" class="hidden">
+    <div class="flex items-center gap-4 mb-6">
+      <a id="downloadBtn" href="/admin/registrations/download"
+        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">
+        Download All Registrations (CSV)
+      </a>
+
+      <label for="courseSelect" class="font-medium">Filter by Course:</label>
+      <select id="courseSelect"
+        class="border border-gray-600 bg-gray-800 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option value="">-- All Courses --</option>
+        <% courses.forEach(c=> { %>
+          <option value="<%= c.id %>">
+            <%= c.name %>
+          </option>
+          <% }) %>
+      </select>
     </div>
 
-    <div class="inline-flex items-center gap-3 bg-blue-900 border border-blue-700 text-blue-300 px-4 py-2 rounded-lg shadow-sm">
-      <span class="font-semibold" id="courseEnrollmentText">
-        Total Course Enrollments: <%= registrations.reduce((sum, r) => sum + r.total_courses, 0) %>
-      </span>
-    </div>
-  </div>
+    <div class="flex flex-wrap gap-4 mb-6">
+      <div
+        class="inline-flex items-center gap-3 bg-green-900 border border-green-700 text-green-300 px-4 py-2 rounded-lg shadow-sm">
+        <span class="font-semibold" id="registrationCountText">
+          Total People: <%= registrations.length %>
+        </span>
+      </div>
 
-  <h2 class="text-xl font-semibold mb-4">Registrations (Grouped by User)</h2>
-  <div class="overflow-x-auto">
-    <table id="registrationsTable" class="min-w-full border border-green-600 rounded shadow-sm bg-black">
-      <thead class="bg-green-700">
-        <tr>
-          <th class="px-4 py-2 text-left font-bold text-white border-r border-green-600">Email</th>
-          <th class="px-4 py-2 text-left font-bold text-white border-r border-green-600">Display Name</th>
-          <th class="px-4 py-2 text-left font-bold text-white border-r border-green-600">Courses Registered</th>
-          <th class="px-4 py-2 text-left font-bold text-white">Total Courses</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% registrations.forEach((r, idx) => { %>
-          <tr data-course-ids="<%= r.course_ids.join(',') %>" data-total-courses="<%= r.total_courses %>" class="<%= idx % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800' %> hover:bg-green-950 border-b border-green-600">
-            <td class="px-4 py-2 text-green-300 border-r border-green-600"><%= r.email %></td>
-            <td class="px-4 py-2 text-green-300 border-r border-green-600"><%= r.display_name %></td>
-            <td class="px-4 py-2 text-green-300 border-r border-green-600"><%= r.courses_registered %></td>
-            <td class="px-4 py-2 text-green-300"><%= r.total_courses %></td>
+      <div
+        class="inline-flex items-center gap-3 bg-blue-900 border border-blue-700 text-blue-300 px-4 py-2 rounded-lg shadow-sm">
+        <span class="font-semibold" id="courseEnrollmentText">
+          Total Course Enrollments: <%= registrations.reduce((sum, r)=> sum + r.total_courses, 0) %>
+        </span>
+      </div>
+    </div>
+
+    <h2 class="text-xl font-semibold mb-4">Registrations (Grouped by User)</h2>
+    <div class="overflow-x-auto">
+      <table id="registrationsTable" class="min-w-full border border-green-600 rounded shadow-sm bg-black">
+        <thead class="bg-green-700">
+          <tr>
+            <th class="px-4 py-2 text-left font-bold text-white border-r border-green-600">Email</th>
+            <th class="px-4 py-2 text-left font-bold text-white border-r border-green-600">Display Name</th>
+            <th class="px-4 py-2 text-left font-bold text-white border-r border-green-600">Courses Registered</th>
+            <th class="px-4 py-2 text-left font-bold text-white">Total Courses</th>
           </tr>
-        <% }) %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          <% registrations.forEach((r, idx)=> { %>
+            <tr data-course-ids="<%= r.course_ids.join(',') %>" data-total-courses="<%= r.total_courses %>"
+              class="<%= idx % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800' %> hover:bg-green-950 border-b border-green-600">
+              <td class="px-4 py-2 text-green-300 border-r border-green-600">
+                <%= r.email %>
+              </td>
+              <td class="px-4 py-2 text-green-300 border-r border-green-600">
+                <%= r.display_name %>
+              </td>
+              <td class="px-4 py-2 text-green-300 border-r border-green-600">
+                <%= r.courses_registered %>
+              </td>
+              <td class="px-4 py-2 text-green-300">
+                <%= r.total_courses %>
+              </td>
+            </tr>
+            <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="noResults" class="hidden mt-4 text-gray-400 italic">
+      No registrations found for this course.
+    </div>
   </div>
 
-  <div id="noResults" class="hidden mt-4 text-gray-400 italic">
-    No registrations found for this course.
+  <div id="coursesSection" class="hidden">
+    <h2 class="text-xl font-semibold mb-4">Manage Courses</h2>
+
+    <div class="mb-6">
+      <button onclick="showAddCourseForm()" class="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-600">
+        Add New Course
+      </button>
+    </div>
+
+    <div id="addCourseForm" class="hidden mb-6 bg-gray-800 p-4 rounded-lg shadow-md">
+      <form action="/admin/courses/add" method="POST" class="space-y-4">
+        <input type="text" name="name" placeholder="Course Name" required
+          class="w-full px-3 py-2 rounded bg-gray-700 text-white">
+        <input type="url" name="poster_url" placeholder="Poster URL" required
+          class="w-full px-3 py-2 rounded bg-gray-700 text-white">
+        <textarea name="course_description" placeholder="Course Description" required
+          class="w-full px-3 py-2 rounded bg-gray-700 text-white"></textarea>
+        <input type="url" name="handout_url" placeholder="Handout URL" required
+          class="w-full px-3 py-2 rounded bg-gray-700 text-white">
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">Submit</button>
+        <button type="button" onclick="hideAddCourseForm()"
+          class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500">Cancel</button>
+      </form>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% courses.forEach(course=> { %>
+        <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 shadow-md">
+          <img src="<%= course.poster_url %>" alt="Poster" class="w-full h-40 object-cover rounded mb-3">
+          <h3 class="text-lg font-semibold mb-1">
+            <%= course.name %>
+          </h3>
+          <p class="text-gray-300 text-sm mb-2">
+            <%= course.course_description %>
+          </p>
+          <div class="flex gap-2 mt-2">
+            <a href="<%= course.handout_url %>" target="_blank"
+              class="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-500 text-sm">
+              View Handout
+            </a>
+            <form action="/admin/courses/<%= course.id %>/delete" method="POST"
+              onsubmit="return confirm('Are you sure you want to delete this course?')">
+              <button type="submit" class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-500 text-sm">
+                Delete
+              </button>
+            </form>
+            <button type="button" onclick="toggleEditForm('<%= course.id %>')"
+              class="px-3 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-500 text-sm">
+              Edit
+            </button>
+          </div>
+
+          <div id="editForm-<%= course.id %>" class="hidden mt-3 bg-gray-700 p-4 rounded-lg">
+            <form action="/admin/courses/<%= course.id %>/edit" method="POST" class="space-y-3">
+              <input type="text" name="name" value="<%= course.name %>" required
+                class="w-full px-3 py-2 rounded bg-gray-800 text-white">
+              <input type="url" name="poster_url" value="<%= course.poster_url %>" required
+                class="w-full px-3 py-2 rounded bg-gray-800 text-white">
+              <textarea name="course_description" required
+                class="w-full px-3 py-2 rounded bg-gray-800 text-white"><%= course.course_description %></textarea>
+              <input type="url" name="handout_url" value="<%= course.handout_url %>" required
+                class="w-full px-3 py-2 rounded bg-gray-800 text-white">
+              <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">Save</button>
+              <button type="button" onclick="toggleEditForm('<%= course.id %>')"
+                class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500">Cancel</button>
+            </form>
+          </div>
+        </div>
+        <% }) %>
+    </div>
   </div>
 
   <script>
-    const courseSelect = document.getElementById('courseSelect');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const tableRows = document.querySelectorAll('#registrationsTable tbody tr');
-    const noResults = document.getElementById('noResults');
-    const registrationCountText = document.getElementById('registrationCountText');
-    const courseEnrollmentText = document.getElementById('courseEnrollmentText');
+    function toggleSection(sectionId) {
+      const sections = ['registrationsSection', 'coursesSection'];
+      const arrows = {
+        registrationsSection: document.getElementById('registrationsArrow'),
+        coursesSection: document.getElementById('coursesArrow')
+      };
 
-    courseSelect.addEventListener('change', () => {
-      const selectedCourseId = courseSelect.value;
-      let visibleCount = 0;
-
-      if (selectedCourseId) {
-        downloadBtn.href = `/admin/registrations/${selectedCourseId}/download`;
-        downloadBtn.textContent = 'Download This Course (CSV)';
-      } else {
-        downloadBtn.href = `/admin/registrations/download`;
-        downloadBtn.textContent = 'Download All Registrations (CSV)';
-      }
-
-      tableRows.forEach(row => {
-        const courseIds = row.getAttribute('data-course-ids').split(',');
-        const match = !selectedCourseId || courseIds.includes(selectedCourseId);
-        row.style.display = match ? '' : 'none';
-        if (match) visibleCount++;
+      sections.forEach(id => {
+        const section = document.getElementById(id);
+        const arrow = arrows[id];
+        if (id === sectionId) {
+          const isHidden = section.classList.contains('hidden');
+          section.classList.toggle('hidden', !isHidden);
+          if (arrow) arrow.textContent = isHidden ? '−' : '+';
+        } else {
+          section.classList.add('hidden');
+          if (arrow) arrow.textContent = '+';
+        }
       });
+    }
+    function toggleEditForm(courseId) {
+      const form = document.getElementById(`editForm-${courseId}`);
+      form.classList.toggle('hidden');
+    }
+    function showAddCourseForm() {
+      document.getElementById('addCourseForm').classList.remove('hidden');
+    }
+    function hideAddCourseForm() {
+      document.getElementById('addCourseForm').classList.add('hidden');
+    }
 
-      registrationCountText.textContent = selectedCourseId
-        ? `Total Registrations for this course: ${visibleCount}`
-        : `Total Registrations (all courses): ${visibleCount}`;
+    document.addEventListener('DOMContentLoaded', () => {
+      const courseSelect = document.getElementById('courseSelect');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const tableRows = document.querySelectorAll('#registrationsTable tbody tr');
+      const noResults = document.getElementById('noResults');
+      const registrationCountText = document.getElementById('registrationCountText');
+      const courseEnrollmentText = document.getElementById('courseEnrollmentText');
 
-      courseEnrollmentText.textContent = selectedCourseId
-        ? `Total Course Enrollments for this course: ${visibleCount}`
-        : `Total Course Enrollments (all courses): ${[...tableRows].reduce((sum, row) => {
-            return sum + parseInt(row.getAttribute('data-total-courses'), 10);
-          }, 0)}`;
+      if (courseSelect) {
+        courseSelect.addEventListener('change', () => {
+          const selectedCourseId = courseSelect.value;
+          let visibleCount = 0;
 
-      noResults.classList.toggle('hidden', visibleCount !== 0);
+          if (selectedCourseId) {
+            downloadBtn.href = `/admin/registrations/${selectedCourseId}/download`;
+            downloadBtn.textContent = 'Download This Course (CSV)';
+          } else {
+            downloadBtn.href = `/admin/registrations/download`;
+            downloadBtn.textContent = 'Download All Registrations (CSV)';
+          }
+
+          tableRows.forEach(row => {
+            const courseIds = row.getAttribute('data-course-ids').split(',');
+            const match = !selectedCourseId || courseIds.includes(selectedCourseId);
+            row.style.display = match ? '' : 'none';
+            if (match) visibleCount++;
+          });
+
+          registrationCountText.textContent = selectedCourseId
+            ? `Total Registrations for this course: ${visibleCount}`
+            : `Total Registrations (all courses): ${visibleCount}`;
+
+          courseEnrollmentText.textContent = selectedCourseId
+            ? `Total Course Enrollments for this course: ${visibleCount}`
+            : `Total Course Enrollments (all courses): ${[...tableRows].reduce((sum, row) => {
+              return sum + parseInt(row.getAttribute('data-total-courses'), 10);
+            }, 0)}`;
+
+          noResults.classList.toggle('hidden', visibleCount !== 0);
+        });
+      }
     });
-  </script>
+    async function loadUsers(page, limit) {
+      const res = await fetch(`/dashboard?page=${page}&limit=${limit}`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      const html = await res.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const newTable = doc.querySelector('#usersTableContainer');
 
+      document.querySelector('#usersTableContainer').innerHTML = newTable.innerHTML;
+    }
+  </script>
 </body>
+
 </html>

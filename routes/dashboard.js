@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const supabase = require('../supabaseClient');
+const supabaseAdmin = require('../supabaseAdmin');
 
 router.get('/', async (req, res) => {
   const userId = req.user.id;
@@ -21,20 +22,37 @@ router.get('/', async (req, res) => {
 
   const registeredIds = new Set(registrations.map(r => r.course_id));
 
-  const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim());
   const userEmail = req.user?.email || req.user?.emails?.[0]?.value;
-  const isAdmin = adminEmails?.includes(userEmail);
+  let isAdmin = false;
+  if (userEmail) {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('admins')
+        .select('email')
+        .eq('email', userEmail)
+        .single();
 
+      if (error) {
+        console.error('Error checking admin:', error);
+      }
+
+      if (data) {
+        isAdmin = true;
+      }
+    } catch (err) {
+      console.error('Unexpected error checking admin:', err);
+    }
+  }
   res.render('dashboard', {
     courses: courses || [],
     registeredIds,
     user: req.user,
-    isAdmin 
+    isAdmin
   });
 });
 
 router.post('/register/:courseId', async (req, res) => {
-  const userId = req.user.id; 
+  const userId = req.user.id;
   const courseId = req.params.courseId;
 
   const { error } = await supabase

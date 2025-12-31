@@ -1,17 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const supabase = require('../supabaseClient');
+const supabaseAdmin = require('../supabaseAdmin');
 
-// TechWeekend dashboard
 router.get('/', async (req, res) => {
   const userId = req.user.id;
 
-  // Fetch TechWeekend events
   const { data: events, error: eventError } = await supabase
     .from('tw_events')
     .select('*');
 
-  // Fetch registrations for this user
   const { data: registrations, error: regError } = await supabase
     .from('tw_registrations')
     .select('event_id')
@@ -22,15 +20,29 @@ router.get('/', async (req, res) => {
     return res.status(500).send('Error loading TechWeekend dashboard');
   }
 
-  // Collect registered event IDs
   const registeredIds = new Set(registrations.map(r => r.event_id));
-
-  // Admin check
-  const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim());
   const userEmail = req.user?.email || req.user?.emails?.[0]?.value;
-  const isAdmin = adminEmails?.includes(userEmail);
+  let isAdmin = false;
 
-  // Render TechWeekend dashboard
+  if (userEmail) {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('admins')
+        .select('email')
+        .eq('email', userEmail)
+        .single();
+
+      if (error) {
+        console.error('Error checking admin:', error);
+      }
+
+      if (data) {
+        isAdmin = true;
+      }
+    } catch (err) {
+      console.error('Unexpected error checking admin:', err);
+    }
+  }
   res.render('tech-weekend', {
     events: events || [],
     registeredIds,
@@ -39,9 +51,8 @@ router.get('/', async (req, res) => {
   });
 });
 
-// Registration route
 router.post('/register/:eventId', async (req, res) => {
-  const userId = req.user.id; 
+  const userId = req.user.id;
   const eventId = req.params.eventId;
 
   const { error } = await supabase
