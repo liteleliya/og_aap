@@ -4,12 +4,10 @@ const supabaseAdmin = require('../supabaseAdmin');
 const { Parser } = require('json2csv');
 const isAdmin = require('../middleware/isAdmin');
 
-// Redirect /admin/techweekend → /admin/techweekend/dashboard
 router.get('/', isAdmin, (req, res) => {
   res.redirect('/admin/techweekend/dashboard');
 });
 
-// Admin dashboard (grouped by user)
 router.get('/dashboard', isAdmin, async (req, res) => {
   const { data, error } = await supabaseAdmin
     .from('tw_registrations')
@@ -24,7 +22,6 @@ router.get('/dashboard', isAdmin, async (req, res) => {
     return res.status(500).send('Error loading admin dashboard');
   }
 
-  // Group registrations by user
   const grouped = {};
   data.forEach(r => {
     const email = r.tw_users?.email;
@@ -48,7 +45,7 @@ router.get('/dashboard', isAdmin, async (req, res) => {
 
   const { data: events, error: eventError } = await supabaseAdmin
     .from('tw_events')
-    .select('id, name');
+    .select('id, name, poster_url, event_description');
 
   if (eventError) {
     console.error('Error fetching events:', eventError);
@@ -58,7 +55,6 @@ router.get('/dashboard', isAdmin, async (req, res) => {
   res.render('techweekend_admin_dashboard', { registrations: groupedData, events });
 });
 
-// Download all registrations (grouped by user) as CSV
 router.get('/registrations/download', isAdmin, async (req, res) => {
   const { data, error } = await supabaseAdmin
     .from('tw_registrations')
@@ -101,7 +97,6 @@ router.get('/registrations/download', isAdmin, async (req, res) => {
   res.send(csv);
 });
 
-// Download registrations for a specific event
 router.get('/registrations/:eventId/download', isAdmin, async (req, res) => {
   const { eventId } = req.params;
 
@@ -134,5 +129,54 @@ router.get('/registrations/:eventId/download', isAdmin, async (req, res) => {
   res.attachment(`techweekend_registrations_${eventId}.csv`);
   res.send(csv);
 });
+
+router.post('/events/add', isAdmin, async (req, res) => {
+  const { name, poster_url, event_description } = req.body;
+
+  const { error } = await supabaseAdmin
+    .from('tw_events')
+    .insert([{ name, poster_url, event_description }]);
+
+  if (error) {
+    console.error('Error adding event:', error);
+    return res.status(500).send('Error adding event');
+  }
+
+  res.redirect('/admin/techweekend/dashboard');
+});
+
+router.post('/events/edit/:id', isAdmin, async (req, res) => {
+  const eventId = req.params.id;
+  const { name, poster_url, event_description } = req.body;
+
+  const { error } = await supabaseAdmin
+    .from('tw_events')
+    .update({ name, poster_url, event_description })
+    .eq('id', eventId);
+
+  if (error) {
+    console.error('Error editing event:', error);
+    return res.status(500).send('Error editing event');
+  }
+
+  res.redirect('/admin/techweekend/dashboard');
+});
+
+router.post('/events/delete/:id', isAdmin, async (req, res) => {
+  const eventId = req.params.id;
+
+  const { error } = await supabaseAdmin
+    .from('tw_events')
+    .delete()
+    .eq('id', eventId);
+
+  if (error) {
+    console.error('Error deleting event:', error);
+    return res.status(500).send('Error deleting event');
+  }
+
+  res.redirect('/admin/techweekend/dashboard');
+});
+
 
 module.exports = router;
