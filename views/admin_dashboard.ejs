@@ -33,11 +33,11 @@
   <div id="registrationsSection" class="hidden tab-content">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-xl font-semibold text-white">Registrations</h2>
-
       <div class="flex items-center gap-4">
         <form method="get" action="/admin/dashboard"
           class="flex items-center gap-3 bg-gray-800 px-4 py-2 rounded shadow-sm">
-          <input type="hidden" name="regPage" value="1">
+          <input type="number" class="bg-gray-700 text-white text-sm rounded border" name="regPage" min="1"
+            placeholder="Enter Page Number" />
           <input type="hidden" name="tab" value="registrations">
           <div id="rowsPerPageContainer">
             <label for="regLimit" class="text-sm text-gray-300 font-medium">Rows per page:</label>
@@ -222,7 +222,8 @@
       <div class="flex items-center gap-4">
         <form method="get" action="/admin/dashboard"
           class="flex items-center gap-3 bg-gray-800 px-4 py-2 rounded shadow-sm">
-          <input type="hidden" name="page" value="1">
+          <input type="number" class="bg-gray-700 text-white text-sm rounded border" name="page" min="1"
+            placeholder="Enter Page Number" />
           <input type="hidden" name="tab" value="users">
           <label for="limit" class="text-sm text-gray-300 font-medium">Rows per page:</label>
           <select name="limit" id="limit" onchange="this.form.submit()"
@@ -360,7 +361,7 @@
           } else {
             rowsPerPageContainer.classList.remove('hidden');
           }
-          
+
           if (selectedCourseId) {
             downloadBtn.href = `/admin/registrations/${selectedCourseId}/download`;
             downloadBtn.textContent = 'Download This Course (CSV)';
@@ -369,7 +370,6 @@
             downloadBtn.textContent = 'Download All Registrations (CSV)';
           }
 
-          // Filter and collect visible rows
           tableRows.forEach(row => {
             const courseId = row.getAttribute('data-course-id');
             const match = !selectedCourseId || courseId === selectedCourseId;
@@ -377,17 +377,14 @@
             if (match) visibleRows.push(row);
           });
 
-          // Sort visible rows by display name
           visibleRows.sort((a, b) => {
             const nameA = a.querySelector('td:nth-child(2)').textContent.trim().toLowerCase();
             const nameB = b.querySelector('td:nth-child(2)').textContent.trim().toLowerCase();
             return nameA.localeCompare(nameB);
           });
 
-          // Reorder DOM
           visibleRows.forEach(row => tableBody.appendChild(row));
 
-          // Update counts
           registrationCountText.textContent = selectedCourseId
             ? `Total Registrations for this course: ${visibleRows.length}`
             : `Total Registrations (all courses): ${tableRows.length}`;
@@ -399,8 +396,6 @@
           noResults.classList.toggle('hidden', visibleRows.length !== 0);
         });
       }
-
-      // User search
       const userSearch = document.getElementById('userSearch');
       if (userSearch) {
         userSearch.addEventListener('input', function () {
@@ -416,7 +411,6 @@
       }
     });
 
-    // Course form toggles
     function toggleEditForm(courseId) {
       const form = document.getElementById(`editForm-${courseId}`);
       form.classList.toggle('hidden');

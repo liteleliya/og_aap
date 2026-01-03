@@ -61,7 +61,6 @@ router.post('/register/:eventId', async (req, res) => {
     return res.status(400).send('Invalid phone number format');
   }
 
-  // ✅ Fetch display_name from tw_users table
   const { data: twUser, error: twUserError } = await supabaseAdmin
     .from('tw_users')
     .select('display_name')
@@ -75,7 +74,6 @@ router.post('/register/:eventId', async (req, res) => {
 
   const displayName = twUser?.display_name || req.user.displayName || '';
 
-  // ✅ Insert registration with display_name
   const { error } = await supabaseAdmin
     .from('tw_registrations')
     .insert([{

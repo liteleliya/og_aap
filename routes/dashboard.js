@@ -96,7 +96,6 @@ router.post('/register/:courseId', async (req, res) => {
   const userId = req.user.id;
   const courseId = req.params.courseId;
 
-  // Fetch display_name from users table
   const { data: userData, error: userFetchError } = await supabaseAdmin
     .from('users')
     .select('display_name')
@@ -115,7 +114,7 @@ router.post('/register/:courseId', async (req, res) => {
     .insert([{
       user_id: userId,
       course_id: courseId,
-      display_name: displayName   // ✅ new column populated
+      display_name: displayName  
     }]);
 
   if (error) {

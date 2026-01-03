@@ -12,7 +12,6 @@ router.get('/', isAdmin, (req, res) => {
 
 router.get('/dashboard', isAdmin, async (req, res) => {
   try {
-    // --- Registrations pagination ---
     const regPage = parseInt(req.query.regPage) || 1;
     const regLimit = parseInt(req.query.regLimit) || 20;
     const regOffset = (regPage - 1) * regLimit;
@@ -29,11 +28,13 @@ router.get('/dashboard', isAdmin, async (req, res) => {
       .range(regOffset, regOffset + regLimit - 1);
 
     if (error) {
-      console.error('Error fetching TechWeekend dashboard data:', error);
-      return res.status(500).send('Error loading admin dashboard');
+      console.error('Error fetching registrations:', error);
+      return res.status(500).render('500', {
+        message: 'You’ve gone overboard — that page doesn’t exist!',
+        backUrl: '/admin/techweekend/dashboard?tab=registrations'
+      });
     }
 
-    // Flatten into raw rows
     const registrations = data.map(r => ({
       user_id: r.user_id,
       email: r.tw_users?.email,
@@ -43,10 +44,8 @@ router.get('/dashboard', isAdmin, async (req, res) => {
       event_id: r.tw_events?.id
     }));
 
-    // Sort alphabetically by display name
     registrations.sort((a, b) => (a.display_name || '').localeCompare(b.display_name || ''));
 
-    // --- Events list ---
     const { data: events, error: eventError } = await supabaseAdmin
       .from('tw_events')
       .select('id, name, poster_url, event_description');
@@ -56,7 +55,6 @@ router.get('/dashboard', isAdmin, async (req, res) => {
       return res.status(500).send('Error loading events');
     }
 
-    // Pagination metadata
     const totalPages = Math.ceil((count || 0) / regLimit);
     const prevPage = regPage > 1 ? regPage - 1 : null;
     const nextPage = regPage < totalPages ? regPage + 1 : null;

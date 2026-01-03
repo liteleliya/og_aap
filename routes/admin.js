@@ -12,6 +12,13 @@ router.get('/dashboard', isAdmin, async (req, res) => {
     const regLimit = parseInt(req.query.regLimit) || 20;
     const regOffset = (regPage - 1) * regLimit;
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+
+    const prevPage = page > 1 ? page - 1 : null;
+    const registrationsPrevPage = regPage > 1 ? regPage - 1 : null;
+   
     const { data: registrationsData, error: regError, count: regCount } = await supabaseAdmin
       .from('course_registrations')
       .select(`
@@ -21,10 +28,12 @@ router.get('/dashboard', isAdmin, async (req, res) => {
   `, { count: 'exact' })
       .order('display_name', { ascending: true })
       .range(regOffset, regOffset + regLimit - 1);
-
     if (regError) {
       console.error('Error fetching registrations:', regError);
-      return res.status(500).send('Error loading registrations');
+      return res.status(500).render('500', {
+        message: 'You’ve gone overboard — that page doesn’t exist!',
+        backUrl: '/admin/dashboard?tab=registrations'
+      });
     }
 
     registrationsData.sort((a, b) =>
@@ -49,10 +58,6 @@ router.get('/dashboard', isAdmin, async (req, res) => {
       return res.status(500).send('Error loading courses');
     }
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const offset = (page - 1) * limit;
-
     const { data: users, error: userError, count } = await supabaseAdmin
       .from('users')
       .select('email, display_name, phone_number, created_at', { count: 'exact' })
@@ -61,27 +66,24 @@ router.get('/dashboard', isAdmin, async (req, res) => {
 
     if (userError) {
       console.error('Error fetching users:', userError);
-      return res.status(500).send('Error loading users');
+      return res.status(500).render('500', {
+        message: 'You’ve gone overboard — that page doesn’t exist!',
+        backUrl: '/admin/dashboard?tab=users'
+      });
     }
 
     const { data: admins } = await supabaseAdmin.from('admins').select('email');
     const adminEmails = admins?.map(a => a.email) || [];
-
+    const totalPages = Math.ceil((count || 0) / limit);
+    const registrationsTotalPages = Math.ceil((regCount || 0) / regLimit);
+    const nextPage = page < totalPages ? page + 1 : null;
+    const registrationsNextPage = regPage < registrationsTotalPages ? regPage + 1 : null;
     const annotatedUsers = users.map(u => ({
       ...u,
       role: adminEmails.includes(u.email) ? 'Admin' : 'User'
     }));
 
-    const totalPages = Math.ceil((count || 0) / limit);
-    const prevPage = page > 1 ? page - 1 : null;
-    const nextPage = page < totalPages ? page + 1 : null;
-
-    const registrationsTotalPages = Math.ceil((regCount || 0) / regLimit);
-    const registrationsPrevPage = regPage > 1 ? regPage - 1 : null;
-    const registrationsNextPage = regPage < registrationsTotalPages ? regPage + 1 : null;
-
     const activeTab = req.query.tab || null;
-
     res.render('admin_dashboard', {
       registrations,
       courses,
@@ -259,7 +261,6 @@ router.post('/courses/add', isAdmin, upload.fields([
     console.log('Poster URL:', posterUrl);
     console.log('Handout URL:', handoutUrl);
 
-    // Insert into DB
     const { error } = await supabaseAdmin
       .from('cte_courses')
       .insert([{
