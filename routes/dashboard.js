@@ -76,7 +76,7 @@ router.post('/enter-phone', async (req, res) => {
   const userId = String(req.user.id);
   const phoneRegex = /^[0-9]{10}$/;
   if (!phoneRegex.test(phone_number)) {
-    return res.status(400).send('Abbey Chutiya hai kya');
+    return res.status(400).send('Invalid phone number format');
   }
 
   const { error } = await supabaseAdmin
